@@ -11,6 +11,7 @@ const contributionFlowHostFieldsFragment = gqlV2/* GraphQL */ `
     location {
       country
     }
+    paypalClientId
     supportedPaymentMethods
     payoutMethods {
       id

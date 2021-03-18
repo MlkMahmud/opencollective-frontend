@@ -98,6 +98,7 @@ class ContributionFlow extends React.Component {
     platformContribution: PropTypes.number,
     skipStepDetails: PropTypes.bool,
     loadingLoggedInUser: PropTypes.bool,
+    hasNewPaypal: PropTypes.bool,
     isEmbed: PropTypes.bool,
     step: PropTypes.string,
     redirect: PropTypes.string,
@@ -389,6 +390,7 @@ class ContributionFlow extends React.Component {
         'defaultEmail',
         'defaultName',
         'useTheme',
+        'hasNewPaypal',
       ]),
       ...queryParams,
     };
@@ -516,12 +518,15 @@ class ContributionFlow extends React.Component {
   getPaypalButtonProps({ currency }) {
     const { stepPayment, stepDetails, stepSummary } = this.state;
     if (stepPayment?.paymentMethod?.type === GQLV2_PAYMENT_METHOD_TYPES.PAYPAL) {
-      const { host } = this.props;
+      const { host, collective, tier } = this.props;
       return {
         host: host,
+        collective,
+        tier,
         currency: currency,
         style: { size: 'responsive', height: 47 },
         totalAmount: getTotalAmount(stepDetails, stepSummary),
+        interval: stepDetails?.interval,
         onClick: () => this.setState({ isSubmitting: true }),
         onCancel: () => this.setState({ isSubmitting: false }),
         onError: e => this.setState({ isSubmitting: false, error: `PayPal error: ${e.message}` }),
@@ -664,6 +669,7 @@ class ContributionFlow extends React.Component {
                     taxes={this.getApplicableTaxes(collective, host, tier?.type)}
                     onSignInClick={() => this.setState({ showSignIn: true })}
                     isEmbed={isEmbed}
+                    hasNewPaypal={this.props.hasNewPaypal}
                   />
 
                   <Box mt={40}>
@@ -678,6 +684,7 @@ class ContributionFlow extends React.Component {
                       totalAmount={getTotalAmount(stepDetails, stepSummary)}
                       currency={currency}
                       disableNext={stepPayment?.key === 'braintree' && !stepPayment.isReady}
+                      hasNewPaypal={this.props.hasNewPaypal}
                     />
                   </Box>
                 </Box>
