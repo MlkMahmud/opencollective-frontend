@@ -21,7 +21,7 @@ class PayWithPaypalButton extends Component {
     currency: PropTypes.string.isRequired,
     interval: PropTypes.string,
     /** Called when user authorize the payment with a payment method generated from PayPal data */
-    onAuthorize: PropTypes.func.isRequired,
+    onSuccess: PropTypes.func.isRequired,
     /** Called when user cancel paypal flow */
     onCancel: PropTypes.func,
     /** Called when an error is thrown during paypal flow */
@@ -86,7 +86,6 @@ class PayWithPaypalButton extends Component {
     }
 
     this.setState({ isLoading: true });
-    // TODO: Replace by value from host
     const { host, currency } = this.props;
     const clientId = host.paypalClientId;
     const intent = this.props.interval ? 'subscription' : 'capture';
@@ -106,13 +105,14 @@ class PayWithPaypalButton extends Component {
     if (this.props.interval) {
       options.intent = 'subscription';
       options.createSubscription = (data, actions) => {
-        return actions.subscription.create({
-          plan_id: this.props.data.paypalPlan.id,
-        });
+        return actions.subscription.create({ plan_id: this.props.data.paypalPlan.id });
       };
       options.onApprove = (data, actions) => {
         // TODO Notify API, but if the call fails we must still display a success message since the user has been charged successfully.
         console.log(data, actions);
+        actions.subscription.get().then(console.log);
+        actions.subscription.activate().then(console.log);
+        this.props.onSuccess(data.orderID);
       };
     } else {
       options.intent = 'capture';
@@ -134,10 +134,9 @@ class PayWithPaypalButton extends Component {
           ],
         });
       };
-      options.onApprove = (data, actions) => {
-        return actions.order.capture().then(details => {
-          // TODO Notify API, but if the call fails we must still display a success message since the user has been charged successfully.
-          console.log('SUCCESS', data, details);
+      options.onApprove = (_, actions) => {
+        return actions.order.capture().then(capture => {
+          this.props.onSuccess(capture.id);
         });
       };
     }

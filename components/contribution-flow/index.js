@@ -284,7 +284,13 @@ class ContributionFlow extends React.Component {
         creditCardInfo: { token: pm.token, ...pm.data },
       };
     } else if (stepPayment.paymentMethod.type === GQLV2_PAYMENT_METHOD_TYPES.PAYPAL) {
-      return pick(stepPayment.paymentMethod, ['type', 'paypalInfo.token', 'paypalInfo.data']);
+      return pick(stepPayment.paymentMethod, [
+        'type',
+        'paypalInfo.token',
+        'paypalInfo.data',
+        'paypalInfo.isNewApi',
+        'paypalInfo.orderId',
+      ]);
     } else if (stepPayment.paymentMethod.type === GQLV2_PAYMENT_METHOD_TYPES.BANK_TRANSFER) {
       return pick(stepPayment.paymentMethod, ['type']);
     }
@@ -530,6 +536,22 @@ class ContributionFlow extends React.Component {
         onClick: () => this.setState({ isSubmitting: true }),
         onCancel: () => this.setState({ isSubmitting: false }),
         onError: e => this.setState({ isSubmitting: false, error: `PayPal error: ${e.message}` }),
+        // New callback, used by `PayWithPaypalButton`
+        onSuccess: orderId => {
+          this.setState(
+            state => ({
+              stepPayment: {
+                ...state.stepPayment,
+                paymentMethod: {
+                  type: GQLV2_PAYMENT_METHOD_TYPES.PAYPAL,
+                  paypalInfo: { isNewApi: true, orderId },
+                },
+              },
+            }),
+            this.submitOrder,
+          );
+        },
+        // Old callback, used by `PayWithPaypalLegacyButton`
         onAuthorize: pm => {
           this.setState(
             state => ({
